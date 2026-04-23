@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>专属浪漫告白</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        /* 全局3D透视，增强立体效果 */
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #fdf6f9;
+            transition: background 1.5s ease;
+            perspective: 1200px;
+        }
+
+        /* 初始单张照片 淡入缩放动画 */
+        .photo-container {
+            position: relative;
+            z-index: 10;
+            opacity: 0;
+            animation: fadeScale 1.5s ease forwards;
+            cursor: pointer;
+        }
+
+        @keyframes fadeScale {
+            0% { opacity: 0; transform: scale(0.5); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .main-photo {
+            width: 400px;
+            height: 400px;
+            object-fit: cover;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(255, 182, 193, 0.8);
+        }
+
+        .love-text {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 48px;
+            font-family: "Brush Script MT", cursive;
+            color: #ff5e96;
+            text-shadow: 0 0 15px #ff96b8, 0 0 30px #ff69b4;
+            animation: textGlow 2s infinite alternate;
+        }
+
+        @keyframes textGlow {
+            0% { text-shadow: 0 0 15px #ff96b8; }
+            100% { text-shadow: 0 0 30px #ff69b4; }
+        }
+
+        /* 3D立方体：仅保留自动旋转（已移除手动拖动相关代码） */
+        .cube-container {
+            display: none;
+            position: relative;
+            width: 400px;
+            height: 400px;
+            transform-style: preserve-3d;
+            animation: cubeRotate 12s linear infinite; /* 核心：纯自动旋转 */
+            cursor: pointer; /* 仅保留点击切换功能 */
+        }
+
+        /* 立方体自动旋转关键帧 */
+        @keyframes cubeRotate {
+            0% { transform: rotateX(0deg) rotateY(0deg); }
+            100% { transform: rotateX(360deg) rotateY(360deg); }
+        }
+
+        .cube-face {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            object-fit: cover;
+            border: 3px solid #ff96b8;
+            box-shadow: 0 0 20px rgba(255, 182, 193, 0.6);
+        }
+
+        /* 立方体6面3D定位 */
+        .front  { transform: translateZ(200px); }
+        .back   { transform: rotateY(180deg) translateZ(200px); }
+        .left   { transform: rotateY(-90deg) translateZ(200px); }
+        .right  { transform: rotateY(90deg) translateZ(200px); }
+        .top    { transform: rotateX(90deg) translateZ(200px); }
+        .bottom { transform: rotateX(-90deg) translateZ(200px); }
+
+        /* 星空背景 + 文字涌出容器 */
+        .particle-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, #1a103f 0%, #000000 100%);
+            z-index: 1;
+            perspective: 800px; /* 文字3D涌出透视 */
+        }
+
+        /* 涌出文字样式 */
+        .particle {
+            position: absolute;
+            color: #ff96b4;
+            font-family: cursive;
+            text-shadow: 0 0 10px #ff5e96;
+            transform-style: preserve-3d;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 1. 初始合照（淡入缩放） -->
+    <div class="photo-container" id="photoBox">
+        <img src="img/front.jpg" class="main-photo" alt="情侣合照">
+        <div class="love-text">我喜欢你</div>
+    </div>
+
+    <!-- 2. 3D立方体（纯自动旋转） -->
+    <div class="cube-container" id="cubeBox">
+        <img src="img/front.jpg" class="cube-face front">
+        <img src="img/back.jpg" class="cube-face back">
+        <img src="img/left.jpg" class="cube-face left">
+        <img src="img/right.jpg" class="cube-face right">
+        <img src="img/top.jpg" class="cube-face top">
+        <img src="img/bottom.jpg" class="cube-face bottom">
+    </div>
+
+    <!-- 3. 文字从后往前无限涌出画布 -->
+    <div class="particle-container" id="particleBox"></div>
+
+    <script>
+        // ========== 元素获取 ==========
+        const photoBox = document.getElementById('photoBox');
+        const cubeBox = document.getElementById('cubeBox');
+        const particleBox = document.getElementById('particleBox');
+        const body = document.body;
+
+        // ========== 自定义配置（可直接修改） ==========
+        const nickName = "宝贝"; // 替换成对方专属昵称
+        const wordList = ["我喜欢你", "I Love you", "遇见你我真的很开心", nickName, "满心是你", "余生相伴", "永远爱你"];
+        const cubeRotateTime = 12; // 立方体自转一圈的时间（秒）
+        const wordFlowSpeed = 8; // 文字涌出速度（5-12为宜，越大越快）
+        const wordCreateInterval = 100; // 文字生成间隔（ms，越小涌出越密集）
+
+        // ========== 1. 自动切换：合照 → 立方体（纯自动旋转） ==========
+        setTimeout(() => {
+            photoBox.style.display = 'none';
+            cubeBox.style.display = 'block';
+            body.style.background = '#000';
+        }, 3000); // 3秒后切换，可修改
+
+        // ========== 2. 点击立方体：切换为文字从后往前无限涌出效果 ==========
+        let isParticle = false;
+        cubeBox.onclick = () => {
+            if (isParticle) return;
+            isParticle = true;
+            cubeBox.style.display = 'none';
+            particleBox.style.display = 'block';
+            body.style.background = '';
+            startWordFlow(); // 启动文字涌出
+        };
+
+        // ========== 3. 文字从后往前无限涌出核心逻辑 ==========
+        function startWordFlow() {
+            // 持续生成文字粒子
+            setInterval(() => {
+                const p = document.createElement('span');
+                p.className = 'particle';
+                // 随机选取文字
+                p.innerText = wordList[Math.floor(Math.random() * wordList.length)];
+
+                // 随机样式：大小、位置
+                const size = Math.random() * 20 + 14;
+                p.style.fontSize = size + 'px';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.top = Math.random() * 100 + '%';
+                p.style.opacity = 0; // 初始透明
+
+                particleBox.appendChild(p);
+                flowAnimate(p); // 启动单个文字的涌出动画
+            }, wordCreateInterval);
+        }
+
+        // 单个文字的涌出动画：从屏幕后方→前方，透明→显示，放大
+        function flowAnimate(elem) {
+            let z = -1000; // 初始位置：屏幕后方1000px处
+            let opacity = 0;
+            let scale = 0.3; // 初始缩放
+
+            function animate() {
+                // 向前移动、渐显、放大
+                z += wordFlowSpeed;
+                opacity += 0.015;
+                scale += 0.008;
+
+                // 边界重置：到达屏幕前方后，回到后方循环涌出，无限持续
+                if (z > 200) {
+                    z = -1000;
+                    opacity = 0;
+                    scale = 0.3;
+                }
+
+                // 应用3D变换
+                elem.style.transform = `translateZ(${z}px) scale(${scale})`;
+                elem.style.opacity = opacity;
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+    </script>
+</body>
+</html>
