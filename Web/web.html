@@ -37,9 +37,10 @@
             100% { opacity: 1; transform: scale(1); }
         }
 
+        /* 主照片同步缩小，和立方体匹配 */
         .main-photo {
-            width: 400px;
-            height: 400px;
+            width: 267px;
+            height: 267px;
             object-fit: cover;
             border-radius: 10px;
             box-shadow: 0 0 30px rgba(255, 182, 193, 0.8);
@@ -60,11 +61,12 @@
             100% { text-shadow: 0 0 30px #ff69b4; }
         }
 
+        /* ========== 正方体缩小1/3 修改处 ========== */
         .cube-container {
             display: none;
             position: relative;
-            width: 400px;
-            height: 400px;
+            width: 267px; /* 原400px → 缩小后267px */
+            height: 267px;
             transform-style: preserve-3d;
             animation: cubeRotate 12s linear infinite;
             cursor: pointer;
@@ -75,21 +77,23 @@
             100% { transform: rotateX(360deg) rotateY(360deg); }
         }
 
+        /* 立方体图片尺寸同步缩小 */
         .cube-face {
             position: absolute;
-            width: 400px;
-            height: 400px;
+            width: 267px;
+            height: 267px;
             object-fit: cover;
             border: 3px solid #ff96b8;
             box-shadow: 0 0 20px rgba(255, 182, 193, 0.6);
         }
 
-        .front  { transform: translateZ(200px); }
-        .back   { transform: rotateY(180deg) translateZ(200px); }
-        .left   { transform: rotateY(-90deg) translateZ(200px); }
-        .right  { transform: rotateY(90deg) translateZ(200px); }
-        .top    { transform: rotateX(90deg) translateZ(200px); }
-        .bottom { transform: rotateX(-90deg) translateZ(200px); }
+        /* 3D间距同步比例修改，保证立方体正常 */
+        .front  { transform: translateZ(133px); }
+        .back   { transform: rotateY(180deg) translateZ(133px); }
+        .left   { transform: rotateY(-90deg) translateZ(133px); }
+        .right  { transform: rotateY(90deg) translateZ(133px); }
+        .top    { transform: rotateX(90deg) translateZ(133px); }
+        .bottom { transform: rotateX(-90deg) translateZ(133px); }
 
         .particle-container {
             display: none;
@@ -116,13 +120,11 @@
 
 <body>
     <div class="photo-container" id="photoBox">
-        <!-- 路径修正：图片/front.jpg -->
         <img src="img/front.jpg" class="main-photo" alt="情侣合照">
         <div class="love-text">我喜欢你</div>
     </div>
 
     <div class="cube-container" id="cubeBox">
-        <!-- 全部路径统一修正为 图片/xxx.jpg -->
         <img src="img/front.jpg" class="cube-face front">
         <img src="img/back.jpg" class="cube-face back">
         <img src="img/left.jpg" class="cube-face left">
@@ -164,7 +166,7 @@
             msg.lang = "zh-CN";
             msg.rate = 0.8;
             msg.pitch = 1.2;
-            msg.volume = 1;
+            volume = 1;
             window.speechSynthesis.speak(msg);
         }
 
